@@ -12,46 +12,41 @@ export const CombinationForm = () => {
 	const combination = (n, k) => factorial(n) / (factorial(k) * factorial(n - k));
 	const permutation = (n, k) => factorial(n) / factorial(n - k);
 
+	const MAX_SAFE_INPUT = 100;
+
 	const calculateResult = () => {
 		const n = Number(totalItems);
 		const k = Number(pickItems);
 
 		if (!Number.isFinite(n) || !Number.isFinite(k) || n < 0 || k < 0 || (!withRepetition && k > n)) {
-			return NaN;
+			return { value: NaN, reason: 'invalid' };
 		}
 
-		if (withOrder) {
-			return withRepetition ? Math.pow(n, k) : permutation(n, k);
-		} else {
-			return withRepetition ? combination(n + k - 1, k) : combination(n, k);
+		if (n > MAX_SAFE_INPUT || k > MAX_SAFE_INPUT) {
+			return { value: NaN, reason: 'too_large' };
 		}
+
+		const value = withOrder ? (withRepetition ? Math.pow(n, k) : permutation(n, k)) : withRepetition ? combination(n + k - 1, k) : combination(n, k);
+
+		return { value, reason: null };
 	};
+	const { value, reason } = calculateResult();
 
 	return (
 		<Form>
 			<FormRow>
 				<Label>כמה פריטים יש בסך הכל?</Label>
-				<NumberInput
-  type="number"
-  value={totalItems}
-  min={0}
-  onChange={(e) => setTotalItems(e.target.value)}
-/>
+				<NumberInput type='number' value={totalItems} min={0} max={100} onChange={(e) => setTotalItems(e.target.value)} />
 			</FormRow>
 
 			<FormRow>
 				<Label>כמה מהם נבחר?</Label>
-				<NumberInput
-  type="number"
-  value={pickItems}
-  min={0}
-  onChange={(e) => setPickItems(e.target.value)}
-/>
+				<NumberInput type='number' value={pickItems} min={0} max={100} onChange={(e) => setPickItems(e.target.value)} />
 			</FormRow>
 
 			<FormRow>
 				<Label>האם יש חזרות?</Label>
-				<Select dir="rtl" value={withRepetition} onChange={(e) => setWithRepetition(e.target.value === 'true')}>
+				<Select dir='rtl' value={withRepetition} onChange={(e) => setWithRepetition(e.target.value === 'true')}>
 					\n <option value='false'>בלי חזרות</option>
 					<option value='true'>עם חזרות</option>
 				</Select>
@@ -59,7 +54,7 @@ export const CombinationForm = () => {
 
 			<FormRow>
 				<Label>האם לסדר יש חשיבות?</Label>
-				<Select dir="rtl" value={withOrder} onChange={(e) => setWithOrder(e.target.value === 'true')}>
+				<Select dir='rtl' value={withOrder} onChange={(e) => setWithOrder(e.target.value === 'true')}>
 					\n <option value='false'>ללא סדר</option>
 					<option value='true'>עם סדר</option>
 				</Select>
@@ -73,7 +68,7 @@ export const CombinationForm = () => {
 				<br />
 				<strong>כמות אפשרויות:</strong>
 				<br />
-				{Number.isFinite(calculateResult()) ? calculateResult().toLocaleString() : 'לא ניתן לחשב'}
+				{reason === 'too_large' ? 'אנא הכנס מספר קטן יותר' : reason === 'invalid' ? 'לא ניתן לחשב עם ערכים שליליים או שגויים' : value.toLocaleString()}
 			</ResultBox>
 		</Form>
 	);
